@@ -1,50 +1,60 @@
 export default async function handler(req, res) {
-  const buscarCotacao = async (dataString) => {
-    const url = `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)?@dataCotacao='${dataString}'&$top=1&$format=json`;
+  const fetch = (await import('node-fetch')).default;
+
+  // Função para formatar datas como MM-DD-YYYY
+  function formatDate(date) {
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${mm}-${dd}-${yyyy}`;
+  }
+
+  // Começa da data de ontem
+  function getYesterdayDate() {
+    const today = new Date();
+    today.setDate(today.getDate() - 1); // ontem
+    return today;
+  }
+
+  async function buscarCotacao(date) {
+    const dataFormatada = formatDate(date);
+    const url = `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)?@dataCotacao='${dataFormatada}'&$top=1&$format=json`;
+
+    const response = await fetch(url);
+    const text = await response.text();
 
     try {
-      const response = await fetch(url);
-      const text = await response.text();
+      // Remove comentário se houver (algumas respostas vêm com /* ... */)
+      const cleaned = text.replace(/^\/\*+|\*+\/$/g, '');
+      const json = JSON.parse(cleaned);
 
-      // Remove comentário do início da resposta (ex: /* ... */)
-      const jsonText = text.replace(/^\/\*.*?\*\//s, '').trim();
-
-      const data = JSON.parse(jsonText);
-      if (data.value && data.value.length > 0) {
-        return data.value[0].cotacaoVenda;
-      } else {
-        return null;
+      if (json?.value?.length) {
+        return json.value[0].cotacaoVenda;
       }
     } catch (error) {
-      console.error('Erro buscando cotação:', error);
-      return null;
-    }
-  };
-
-  const buscarCotacaoUltimosDias = async () => {
-    const hoje = new Date();
-    hoje.setDate(hoje.getDate() - 1); // Começa pela data de ontem
-
-    for (let i = 0; i < 7; i++) {
-      const data = new Date(hoje);
-      data.setDate(data.getDate() - i);
-      const dataFormatada = `${(data.getMonth() + 1).toString().padStart(2, '0')}-${data.getDate().toString().padStart(2, '0')}-${data.getFullYear()}`;
-
-      console.log(`Tentando buscar cotação para: ${dataFormatada}`);
-      const cotacao = await buscarCotacao(dataFormatada);
-      if (cotacao) return cotacao;
+      console.error("Erro parseando JSON:", error);
     }
 
     return null;
-  };
-
-  const cotacao = await buscarCotacaoUltimosDias();
-
-  if (!cotacao) {
-    return res.status(500).send('Não foi possível obter a cotação do dólar.');
   }
 
-  // Redireciona para o formulário do Jotform com a cotação no parâmetro
-  const url = `https://form.jotform.com/251176643041047?usd_brl=${cotacao}`;
-  return res.redirect(url);
+  async function buscarCotacaoUltimosDias() {
+    let date = getYesterdayDate(); // Inicia com ontem
+    for (let i = 0; i < 7; i++) {
+      console.log(`Tentativa ${i + 1}: Buscando cotação para ${formatDate(date)}`);
+      const cotacao = await buscarCotacao(date);
+      if (cotacao) return cotacao;
+      date.setDate(date.getDate() - 1); // retrocede um dia
+    }
+    return null;
+  }
+
+  const cotacao = await buscarCotacaoUltimosDias();
+  if (cotacao) {
+    const formUrl = `https://form.jotform.com/251176643041047?usd_brl=${cotacao}`;
+    res.writeHead(302, { Location: formUrl });
+    res.end();
+  } else {
+    res.status(500).send("Não foi possível obter a cotação do dólar.");
+  }
 }
