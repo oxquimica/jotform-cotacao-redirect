@@ -57,7 +57,7 @@
 
       razao.textContent = "Buscando razão social...";
       try {
-        const res = await fetch(`/api/razao-social?cnpj=${cnpj}`);
+        const res = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
         const data = await res.json();
         if (data.nome) {
           razao.textContent = `Razão social: ${data.nome}`;
