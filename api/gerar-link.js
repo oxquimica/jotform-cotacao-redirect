@@ -1,29 +1,38 @@
 export default async function handler(req, res) {
   const { cnpj } = req.query;
 
-  if (!cnpj) {
-    res.status(400).send("CNPJ é obrigatório.");
-    return;
+  if (!cnpj || cnpj.length !== 14) {
+    return res.status(400).send("CNPJ inválido.");
   }
 
   try {
-    // Busca razão social
-    const resposta = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
-    const dados = await resposta.json();
-    const razao = encodeURIComponent(dados.nome || "");
+    // 1. Buscar razão social da empresa
+    const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
+    const data = await response.json();
 
-    // Busca cotação do dólar
+    if (!data.nome) {
+      return res.status(404).send("Razão social não encontrada.");
+    }
+
+    const razaoSocial = data.nome;
+
+    // 2. Buscar cotação do dólar
     const cotacao = await buscarCotacaoUltimosDias(10);
-    const cotacaoFormatada = cotacao ? cotacao.toFixed(2) : "";
+    if (!cotacao) {
+      return res.status(500).send("Cotação não encontrada.");
+    }
 
-    // Monta URL com todos os campos do Jotform
-    const url = `https://form.jotform.com/251176643041047?cnpj=${cnpj}&razaoSocial=${razao}&usd_brl=${cotacaoFormatada}`;
+    const cotacaoFormatada = cotacao.toFixed(2);
+    const razaoEncoded = encodeURIComponent(razaoSocial);
+
+    // 3. Redirecionar para o Jotform com os dados preenchidos
+    const url = `https://form.jotform.com/251176643041047?usd_brl=${cotacaoFormatada}&cnpj=${cnpj}&razaoSocial=${razaoEncoded}`;
 
     res.writeHead(302, { Location: url });
     res.end();
   } catch (error) {
-    console.error("Erro:", error);
-    res.status(500).send("Erro ao processar a requisição.");
+    console.error("Erro ao gerar link:", error);
+    res.status(500).send("Erro interno no servidor.");
   }
 }
 
@@ -47,8 +56,8 @@ async function buscarCotacaoUltimosDias(diasMaximos) {
       if (json.value && json.value.length > 0) {
         return json.value[0].cotacaoVenda;
       }
-    } catch (e) {
-      console.error("Erro buscando cotação:", e);
+    } catch (error) {
+      console.error("Erro buscando cotação:", error);
     }
   }
 
@@ -59,5 +68,5 @@ function formatarDataParaURL(data) {
   const dia = String(data.getDate()).padStart(2, '0');
   const mes = String(data.getMonth() + 1).padStart(2, '0');
   const ano = data.getFullYear();
-  return `${mes}-${dia}-${ano}`;
+  return `${mes}-${dia}-${ano}`; // Formato MM-DD-YYYY
 }
