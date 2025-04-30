@@ -1,11 +1,12 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" },
-    { "src": "index.html", "use": "@vercel/static" }
+    { "src": "api/redirect.js", "use": "@vercel/node" },
+    { "src": "api/gerar-link.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "api/$1.js" },
-    { "src": "/", "dest": "index.html" }
+    { "src": "/api/redirect", "dest": "api/redirect.js" },
+    { "src": "/api/gerar-link", "dest": "api/gerar-link.js" },
+    { "src": "/", "dest": "/index.html" }
   ]
 }
