@@ -1,37 +1,43 @@
 export default async function handler(req, res) {
-  const { cnpj } = req.query;
-
-  if (!cnpj || cnpj.length !== 14) {
-    return res.status(400).send("CNPJ inválido.");
-  }
-
   try {
-    // 1. Buscar razão social da empresa
+    const { cnpj } = req.query;
+    console.log("🔍 CNPJ recebido:", cnpj);
+
+    if (!cnpj) {
+      console.warn("⚠️ Nenhum CNPJ fornecido");
+      return res.status(400).send("CNPJ é obrigatório.");
+    }
+
+    // Consulta a razão social na ReceitaWS
     const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
     const data = await response.json();
+    console.log("📦 Dados da ReceitaWS:", data);
 
     if (!data.nome) {
+      console.warn("❌ Razão social não encontrada para o CNPJ:", cnpj);
       return res.status(404).send("Razão social não encontrada.");
     }
 
-    const razaoSocial = data.nome;
+    const razaoSocial = encodeURIComponent(data.nome);
 
-    // 2. Buscar cotação do dólar
+    // Busca cotação do dólar
     const cotacao = await buscarCotacaoUltimosDias(10);
     if (!cotacao) {
-      return res.status(500).send("Cotação não encontrada.");
+      console.error("❌ Cotação do dólar não encontrada");
+      return res.status(500).send("Erro ao obter cotação.");
     }
 
     const cotacaoFormatada = cotacao.toFixed(2);
-    const razaoEncoded = encodeURIComponent(razaoSocial);
+    console.log("💵 Cotação formatada:", cotacaoFormatada);
 
-    // 3. Redirecionar para o Jotform com os dados preenchidos
-    const url = `https://form.jotform.com/251176643041047?usd_brl=${cotacaoFormatada}&cnpj=${cnpj}&razaoSocial=${razaoEncoded}`;
+    // Monta o link do formulário com os dados
+    const url = `https://form.jotform.com/251176643041047?usd_brl=${cotacaoFormatada}&cnpj=${cnpj}&razaoSocial=${razaoSocial}`;
+    console.log("🔗 Redirecionando para:", url);
 
     res.writeHead(302, { Location: url });
     res.end();
   } catch (error) {
-    console.error("Erro ao gerar link:", error);
+    console.error("🔥 Erro inesperado no handler gerar-link:", error);
     res.status(500).send("Erro interno no servidor.");
   }
 }
@@ -50,14 +56,16 @@ async function buscarCotacaoUltimosDias(diasMaximos) {
     try {
       const response = await fetch(url);
       const text = await response.text();
+
       const jsonText = text.replace(/^\/\*+[\s\S]*?\*+\//, "").trim();
       const json = JSON.parse(jsonText);
 
       if (json.value && json.value.length > 0) {
+        console.log(`✅ Cotação encontrada para ${dataFormatada}:`, json.value[0].cotacaoVenda);
         return json.value[0].cotacaoVenda;
       }
     } catch (error) {
-      console.error("Erro buscando cotação:", error);
+      console.warn(`⚠️ Erro buscando cotação para ${dataFormatada}:`, error);
     }
   }
 
@@ -68,5 +76,5 @@ function formatarDataParaURL(data) {
   const dia = String(data.getDate()).padStart(2, '0');
   const mes = String(data.getMonth() + 1).padStart(2, '0');
   const ano = data.getFullYear();
-  return `${mes}-${dia}-${ano}`; // Formato MM-DD-YYYY
+  return `${mes}-${dia}-${ano}`;
 }
