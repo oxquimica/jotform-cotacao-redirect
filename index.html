@@ -35,7 +35,16 @@
   </style>
 </head>
 <body>
-  <img src="/logo.jpeg" alt="Logo da empresa" style="max-width: 300px; width: 100%; height: auto; display: block; margin: 0 auto 20px;" />
+  <img 
+    src="/logo.jpeg" 
+    alt="Ox Quimica" 
+    title="Ox Quimica" 
+    style="max-width: 300px; width: 100%; height: auto; display: block; margin: 0 auto 20px;" 
+    onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';"
+  />
+  <div id="logoFallback" style="display:none; text-align: center; font-weight: bold; margin-bottom: 20px;">
+    [Ox Quimica]
+  </div>
   <h2>Preencha o CNPJ da empresa</h2>
   <input type="text" id="cnpj" placeholder="00.000.000/0001-00" />
   <div class="info" id="razao"></div>
