@@ -3,5 +3,10 @@
   "builds": [
     { "src": "api/redirect.js", "use": "@vercel/node" },
     { "src": "api/gerar-link.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/redirect", "dest": "api/redirect.js" },
+    { "src": "/api/gerar-link", "dest": "api/gerar-link.js" },
+    { "src": "/", "dest": "/index.html" }
   ]
 }
