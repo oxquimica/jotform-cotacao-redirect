@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "logo.png", "use": "@vercel/static" },
+    { "src": "fundo.png", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/logo.png", "dest": "/logo.png" },
+    { "src": "/fundo.png", "dest": "/fundo.png" },
+    { "src": "/", "dest": "/index.html" }
+  ]
+}
