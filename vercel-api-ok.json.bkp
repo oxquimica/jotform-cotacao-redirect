@@ -4,16 +4,12 @@
     { "src": "api/redirect.js", "use": "@vercel/node" },
     { "src": "api/gerar-link.js", "use": "@vercel/node" },
     { "src": "api/razao-social.js", "use": "@vercel/node" },
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "logo.png", "use": "@vercel/static" },
-    { "src": "fundo.png", "use": "@vercel/static" }
+    { "src": "index.html", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/redirect", "dest": "api/redirect.js" },
     { "src": "/api/gerar-link", "dest": "api/gerar-link.js" },
     { "src": "/api/razao-social", "dest": "api/razao-social.js" },
-    { "src": "/logo.png", "dest": "/logo.png" },
-    { "src": "/fundo.png", "dest": "/fundo.png" },
     { "src": "/", "dest": "/index.html" }
   ]
 }
