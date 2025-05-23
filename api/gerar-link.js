@@ -1,52 +1,80 @@
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
   try {
-    const { cnpj, razaoSocial } = req.query;
+    const { cnpj } = req.query;
+    console.log("🔍 CNPJ recebido:", cnpj);
 
     if (!cnpj) {
-      res.status(400).send("CNPJ obrigatório.");
-      return;
+      console.warn("⚠️ Nenhum CNPJ fornecido");
+      return res.status(400).send("CNPJ é obrigatório.");
     }
 
-    let nomeEmpresa = razaoSocial;
+    // Consulta a razão social na ReceitaWS
+    const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
+    const data = await response.json();
+    console.log("📦 Dados da ReceitaWS:", data);
 
-    // Se não veio razão social, busca via API externa
-    if (!nomeEmpresa) {
-      const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
-      const data = await response.json();
-
-      if (!data.nome) {
-        res.status(404).send("Razão social não encontrada.");
-        return;
-      }
-      nomeEmpresa = data.nome;
+    if (!data.nome) {
+      console.warn("❌ Razão social não encontrada para o CNPJ:", cnpj);
+      return res.status(404).send("Razão social não encontrada.");
     }
 
-    // Busca cotação do dólar (exemplo, adapte conforme sua API)
-    const cotacaoResponse = await fetch(
-      "https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados/ultimos/10?formato=json"
-    );
-    const cotacaoData = await cotacaoResponse.json();
+    const razaoSocial = encodeURIComponent(data.nome);
 
-    if (!cotacaoData || cotacaoData.length === 0) {
-      res.status(500).send("Erro ao buscar cotação do dólar.");
-      return;
+    // Busca cotação do dólar
+    const cotacao = await buscarCotacaoUltimosDias(10);
+    if (!cotacao) {
+      console.error("❌ Cotação do dólar não encontrada");
+      return res.status(500).send("Erro ao obter cotação.");
     }
 
-    const ultimaCotacao = cotacaoData[cotacaoData.length - 1].valor;
-    const cotacaoFormatada = ultimaCotacao.toFixed(2);
+    const cotacaoFormatada = cotacao.toFixed(2);
+    console.log("💵 Cotação formatada:", cotacaoFormatada);
 
-    // Monta a URL do formulário com parâmetros
-    const url = `https://form.jotform.com/251176643041047?cnpj=${encodeURIComponent(
-      cnpj
-    )}&razaoSocial=${encodeURIComponent(nomeEmpresa)}&usd_brl=${cotacaoFormatada}`;
+    // Monta o link do formulário com os dados
+    const url = `https://form.jotform.com/251176643041047?usd_brl=${cotacaoFormatada}&cnpj=${cnpj}&razaoSocial=${razaoSocial}`;
+    console.log("🔗 Redirecionando para:", url);
 
-    // Redireciona para o formulário
     res.writeHead(302, { Location: url });
     res.end();
   } catch (error) {
-    console.error("Erro na API gerar-link:", error);
+    console.error("🔥 Erro inesperado no handler gerar-link:", error);
     res.status(500).send("Erro interno no servidor.");
   }
+}
+
+async function buscarCotacaoUltimosDias(diasMaximos) {
+  const hoje = new Date();
+  hoje.setDate(hoje.getDate() - 1); // Começa por ontem
+
+  for (let i = 0; i < diasMaximos; i++) {
+    const data = new Date(hoje);
+    data.setDate(data.getDate() - i);
+    const dataFormatada = formatarDataParaURL(data);
+
+    const url = `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)?@dataCotacao='${dataFormatada}'&$top=1&$format=json`;
+
+    try {
+      const response = await fetch(url);
+      const text = await response.text();
+
+      const jsonText = text.replace(/^\/\*+[\s\S]*?\*+\//, "").trim();
+      const json = JSON.parse(jsonText);
+
+      if (json.value && json.value.length > 0) {
+        console.log(`✅ Cotação encontrada para ${dataFormatada}:`, json.value[0].cotacaoVenda);
+        return json.value[0].cotacaoVenda;
+      }
+    } catch (error) {
+      console.warn(`⚠️ Erro buscando cotação para ${dataFormatada}:`, error);
+    }
+  }
+
+  return null;
+}
+
+function formatarDataParaURL(data) {
+  const dia = String(data.getDate()).padStart(2, '0');
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const ano = data.getFullYear();
+  return `${mes}-${dia}-${ano}`;
 }
