@@ -1,15 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/redirect.js", "use": "@vercel/node" },
-    { "src": "api/gerar-link.js", "use": "@vercel/node" },
-    { "src": "api/razao-social.js", "use": "@vercel/node" },
-    { "src": "public/index.html", "use": "@vercel/static" }
-  ],
   "routes": [
-    { "src": "/api/redirect", "dest": "api/redirect.js" },
-    { "src": "/api/gerar-link", "dest": "api/gerar-link.js" },
-    { "src": "/api/razao-social", "dest": "api/razao-social.js" },
-    { "src": "/", "dest": "/public/index.html" }
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
