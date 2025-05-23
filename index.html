@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Consulta de CNPJ</title>
   <style>
     body {
@@ -18,6 +18,7 @@
       font-size: 1rem;
       border: 1px solid #ccc;
       border-radius: 5px;
+      box-sizing: border-box;
     }
     button {
       background-color: #007bff;
@@ -35,43 +36,44 @@
   </style>
 </head>
 <body>
-
   <h2>Preencha o CNPJ da empresa</h2>
-
   <input type="text" id="cnpj" placeholder="00.000.000/0001-00" />
   <div class="info" id="razao"></div>
-  <button onclick="redirecionar()">Ir para o formulário</button>
+  <button id="btnManual">Ir para o formulário</button>
 
-  <hr>
-
-  <h3>Ou selecione uma razão social da lista</h3>
-  <select id="dropdown">
-    <option value="">Selecione uma empresa</option>
+  <h2>Ou selecione da lista interna (Google Sheets)</h2>
+  <select id="listaEmpresas">
+    <option value="">-- Carregando lista... --</option>
   </select>
-  <button onclick="usarSelecionado()">Utilizar razão social informada</button>
+  <button id="btnDropdown">Utilizar razão social informada</button>
 
   <script>
-    const URL_CSV = "https://docs.google.com/spreadsheets/d/1tr_kyEFuQVPy_zDfWJ2qEkumEYLu-1APUeEqW2RW308/export?format=csv";
-
     const input = document.getElementById('cnpj');
     const razao = document.getElementById('razao');
-    const dropdown = document.getElementById('dropdown');
+    const btnManual = document.getElementById('btnManual');
+    const listaEmpresas = document.getElementById('listaEmpresas');
+    const btnDropdown = document.getElementById('btnDropdown');
+
     let cnpjValido = '';
     let nomeEmpresa = '';
 
-    // Função para buscar a razão social digitando CNPJ
+    // Função para limpar máscara do CNPJ
+    function limparCNPJ(cnpj) {
+      return cnpj.replace(/\D/g, '');
+    }
+
+    // Busca manual via ReceitaWS
     input.addEventListener('blur', async () => {
-      const cnpj = input.value.replace(/\D/g, '');
+      const cnpj = limparCNPJ(input.value);
       if (cnpj.length !== 14) {
         razao.textContent = "CNPJ inválido.";
         nomeEmpresa = '';
         cnpjValido = '';
         return;
       }
-
       razao.textContent = "Buscando razão social...";
       try {
-        const res = await fetch(`/api/razao-social?cnpj=${cnpj}`);
+        const res = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
         const data = await res.json();
         if (data.nome) {
           razao.textContent = `Razão social: ${data.nome}`;
@@ -79,50 +81,79 @@
           cnpjValido = cnpj;
         } else {
           razao.textContent = "Razão social não encontrada.";
+          nomeEmpresa = '';
+          cnpjValido = '';
         }
       } catch {
         razao.textContent = "Erro ao buscar razão social.";
+        nomeEmpresa = '';
+        cnpjValido = '';
       }
     });
 
-    function redirecionar() {
+    btnManual.addEventListener('click', () => {
       if (!cnpjValido || !nomeEmpresa) {
         alert("Preencha um CNPJ válido antes de continuar.");
         return;
       }
-      window.location.href = `/api/gerar-link?cnpj=${cnpjValido}&razaoSocial=${encodeURIComponent(nomeEmpresa)}`;
+      window.location.href = `/api/gerar-link?cnpj=${encodeURIComponent(cnpjValido)}&razaoSocial=${encodeURIComponent(nomeEmpresa)}`;
+    });
+
+    // --- Parte nova: carregar dados do Google Sheets ---
+    // Coloque aqui seu ID da planilha pública do Google Sheets:
+    const sheetId = '1tr_kyEFuQVPy_zDfWJ2qEkumEYLu-1APUeEqW2RW308';
+
+    // URL para pegar dados do Sheets no formato JSON
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+
+    // Função para buscar e montar a lista
+    async function carregarListaGoogleSheets() {
+      try {
+        const res = await fetch(sheetUrl);
+        const text = await res.text();
+
+        // O JSON está em um texto com prefixo: "/*O_o*/\ngoogle.visualization.Query.setResponse(...)"
+        const jsonStr = text.match(/google\.visualization\.Query\.setResponse\((.+)\)/)[1];
+        const data = JSON.parse(jsonStr);
+
+        // Limpa dropdown e adiciona opção padrão
+        listaEmpresas.innerHTML = '<option value="">-- Selecione uma razão social --</option>';
+
+        // Cada linha é um array de células; 
+        // Assumindo que a coluna A (0) é CNPJ e a coluna B (1) é Razão Social
+        const rows = data.table.rows;
+
+        rows.forEach(row => {
+          const cnpj = row.c[0]?.v || '';
+          const razaoSocial = row.c[1]?.v || '';
+          if (cnpj && razaoSocial) {
+            const option = document.createElement('option');
+            option.value = cnpj;  // com máscara
+            option.textContent = `${razaoSocial} - ${cnpj}`;
+            option.setAttribute('data-razao', razaoSocial);
+            listaEmpresas.appendChild(option);
+          }
+        });
+
+      } catch (err) {
+        listaEmpresas.innerHTML = '<option value="">Erro ao carregar lista</option>';
+        console.error('Erro ao buscar lista do Google Sheets:', err);
+      }
     }
 
-    function usarSelecionado() {
-      const valor = dropdown.value;
-      if (!valor) {
-        alert("Selecione uma empresa na lista.");
+    carregarListaGoogleSheets();
+
+    btnDropdown.addEventListener('click', () => {
+      const selecionado = listaEmpresas.options[listaEmpresas.selectedIndex];
+      if (!selecionado || !selecionado.value) {
+        alert("Selecione uma razão social antes de continuar.");
         return;
       }
-      const [cnpj, razaoSocial] = valor.split('|');
-      window.location.href = `/api/gerar-link?cnpj=${cnpj}&razaoSocial=${encodeURIComponent(razaoSocial)}`;
-    }
+      const cnpjLimpo = limparCNPJ(selecionado.value);
+      const razaoSelecionada = selecionado.getAttribute('data-razao');
 
-    async function carregarDropdown() {
-      try {
-        const res = await fetch(URL_CSV);
-        const texto = await res.text();
-        const linhas = texto.trim().split('\n');
-        linhas.shift(); // remove o cabeçalho
-
-        linhas.forEach(linha => {
-          const [razaoSocial, cnpj] = linha.split(',');
-          const opcao = document.createElement('option');
-          opcao.value = `${cnpj.trim()}|${razaoSocial.trim()}`;
-          opcao.textContent = `${razaoSocial.trim()} - ${cnpj.trim()}`;
-          dropdown.appendChild(opcao);
-        });
-      } catch (error) {
-        console.error("Erro ao carregar lista:", error);
-      }
-    }
-
-    carregarDropdown();
+      window.location.href = `/api/gerar-link?cnpj=${encodeURIComponent(cnpjLimpo)}&razaoSocial=${encodeURIComponent(razaoSelecionada)}`;
+    });
   </script>
 </body>
 </html>
