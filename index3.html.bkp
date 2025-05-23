@@ -99,8 +99,7 @@
         alert("Selecione uma empresa na lista.");
         return;
       }
-      const [cnpjFormatado, razaoSocial] = valor.split('|');
-      const cnpj = cnpjFormatado.replace(/\D/g, ''); // 🔥 Remove pontos, barras e traços
+      const [cnpj, razaoSocial] = valor.split('|');
       window.location.href = `/api/gerar-link?cnpj=${cnpj}&razaoSocial=${encodeURIComponent(razaoSocial)}`;
     }
 
