@@ -6,6 +6,7 @@
     { "src": "api/razao-social.js", "use": "@vercel/node" },
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "logo.png", "use": "@vercel/static" },
+    { "src": "logo-final.png", "use": "@vercel/static" },
     { "src": "fundo.png", "use": "@vercel/static" }
   ],
   "routes": [
@@ -13,6 +14,7 @@
     { "src": "/api/gerar-link", "dest": "api/gerar-link.js" },
     { "src": "/api/razao-social", "dest": "api/razao-social.js" },
     { "src": "/logo.png", "dest": "/logo.png" },
+    { "src": "/logo-final.png", "dest": "/logo-final.png" },
     { "src": "/fundo.png", "dest": "/fundo.png" },
     { "src": "/", "dest": "/index.html" }
   ]

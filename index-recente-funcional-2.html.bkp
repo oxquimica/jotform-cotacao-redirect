@@ -34,10 +34,6 @@
       animation: fadeIn 0.5s forwards;
     }
 
-    img.logo-final {
-      animation-delay: 1.5s;
-    }
-
     h2, h3 {
       text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
       opacity: 0;
@@ -135,9 +131,6 @@
       <option value="">Selecione uma empresa</option>
     </select>
     <button onclick="usarSelecionado()">Utilizar razão social informada</button>
-
-    <!-- ✅ Nova logo no final -->
-    <img src="logo-final.png" alt="Logo Final" class="logo logo-final">
   </div>
 
   <script>
