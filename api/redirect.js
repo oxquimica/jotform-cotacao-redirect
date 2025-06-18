@@ -8,16 +8,18 @@ export default async function handler(req, res) {
     }
 
     const cotacaoFormatada = cotacao.toFixed(2);
-    const formId = (alt === '1') 
-      ? '251176643041047' 
-      : '251684725505663';
+
+    const hoje = new Date();
+    const dia = hoje.getDate();
+    const formularioPadrao = (dia <= 14) ? '251176643041047' : '251684725505663';
+    const formularioAlternativo = (dia <= 14) ? '251684725505663' : '251176643041047';
+    const formId = (alt === '1') ? formularioAlternativo : formularioPadrao;
 
     res.writeHead(302, {
       Location: `https://form.jotform.com/${formId}?usd_brl=${cotacaoFormatada}`
     });
     res.end();
   } catch (error) {
-    console.error("Erro:", error);
     res.status(500).send("Erro interno.");
   }
 }
@@ -38,9 +40,7 @@ async function buscarCotacaoUltimosDias(diasMaximos) {
       if (json.value && json.value.length > 0) {
         return json.value[0].cotacaoVenda;
       }
-    } catch (error) {
-      console.error(`Erro buscando cotação para ${dataFormatada}:`, error);
-    }
+    } catch {}
   }
   return null;
 }

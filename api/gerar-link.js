@@ -3,37 +3,33 @@ export default async function handler(req, res) {
     const { cnpj, razaoSocial, alt } = req.query;
 
     if (!cnpj || !razaoSocial) {
-      console.warn("Faltando cnpj ou razaoSocial");
       return res.status(400).send("CNPJ e razão social são obrigatórios.");
     }
-
     if (typeof cnpj !== "string" || cnpj.length !== 14 || !/^\d{14}$/.test(cnpj)) {
-      console.warn("CNPJ inválido:", cnpj);
       return res.status(400).send("CNPJ inválido.");
     }
 
     const razaoSocialDecoded = decodeURIComponent(razaoSocial);
     const cotacao = await buscarCotacaoUltimosDias(10);
     if (!cotacao) {
-      console.error("❌ Cotação do dólar não encontrada");
       return res.status(500).send("Erro ao obter cotação.");
     }
 
     const cotacaoFormatada = cotacao.toFixed(2);
     const razaoSocialEncoded = encodeURIComponent(razaoSocialDecoded);
 
-    // Define o ID do formulário com base no parâmetro 'alt'
-    const formId = (alt === '1') 
-      ? '251176643041047' 
-      : '251684725505663';
+    // Lógica de seleção de formulário:
+    const hoje = new Date();
+    const dia = hoje.getDate();
+
+    const formularioPadrao = (dia <= 14) ? '251176643041047' : '251684725505663';
+    const formularioAlternativo = (dia <= 14) ? '251684725505663' : '251176643041047';
+    const formId = (alt === '1') ? formularioAlternativo : formularioPadrao;
 
     const url = `https://form.jotform.com/${formId}?usd_brl=${cotacaoFormatada}&cnpj=${cnpj}&razaoSocial=${razaoSocialEncoded}`;
-    console.log("🔗 Redirecionando para:", url);
-
     res.writeHead(302, { Location: url });
     res.end();
   } catch (error) {
-    console.error("🔥 Erro inesperado:", error);
     res.status(500).send("Erro interno no servidor.");
   }
 }
@@ -54,9 +50,7 @@ async function buscarCotacaoUltimosDias(diasMaximos) {
       if (json.value && json.value.length > 0) {
         return json.value[0].cotacaoVenda;
       }
-    } catch (error) {
-      console.warn(`Erro buscando cotação para ${dataFormatada}:`, error);
-    }
+    } catch {}
   }
   return null;
 }
