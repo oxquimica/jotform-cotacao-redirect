@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const cotacaoFormatada = cotacao.toFixed(2);
     const razaoSocialEncoded = encodeURIComponent(razaoSocialDecoded);
 
-    const url = `https://form.jotform.com/251176643041047?usd_brl=${cotacaoFormatada}&cnpj=${cnpj}&razaoSocial=${razaoSocialEncoded}`;
+    const url = `https://form.jotform.com/251684725505663?usd_brl=${cotacaoFormatada}&cnpj=${cnpj}&razaoSocial=${razaoSocialEncoded}`;
     console.log("🔗 Redirecionando para:", url);
 
     res.writeHead(302, { Location: url });

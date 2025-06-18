@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     const cotacaoFormatada = cotacao.toFixed(2); // Arredonda para 2 casas decimais
 
     res.writeHead(302, {
-      Location: `https://form.jotform.com/251176643041047?usd_brl=${cotacaoFormatada}`
+      Location: `https://form.jotform.com/251684725505663?usd_brl=${cotacaoFormatada}`
     });
     res.end();
   } catch (error) {
