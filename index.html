@@ -45,17 +45,16 @@
 
     h2 { animation: fadeIn 0.5s forwards; animation-delay: 0.25s; }
     h3 { animation: fadeIn 0.5s forwards; animation-delay: 1s; }
-
     input, button, select, .checkbox-container {
       padding: 10px;
       margin-top: 10px;
       font-size: 1rem;
       border-radius: 5px;
       opacity: 0;
+      animation: fadeIn 0.5s forwards;
       display: block;
       margin-left: auto;
       margin-right: auto;
-      border: 1px solid #ccc;
     }
 
     input { width: calc(100% - 40px); animation-delay: 0.5s; }
@@ -70,19 +69,6 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     .cotacao { margin-bottom: 15px; font-size: 1.1rem; color: white; opacity: 0; animation: fadeIn 0.5s forwards; animation-delay: 0.4s; }
-
-    /* Ajuste para o checkbox ficar alinhado ao texto */
-    .checkbox-container label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .checkbox-container {
-      animation: fadeIn 0.5s forwards;
-      animation-delay: 0.65s;
-    }
   </style>
 </head>
 <body>
@@ -95,11 +81,9 @@
 
     <input type="text" id="cnpj" placeholder="00.000.000/0001-00" />
     <div class="info" id="razao"></div>
-
+    
     <div class="checkbox-container">
-      <label>
-        <input type="checkbox" id="formularioAlternativo" style="width: auto;"> Usar outro formulário
-      </label>
+      <label><input type="checkbox" id="formularioAlternativo"> Usar outro formulário</label>
     </div>
 
     <button onclick="redirecionar()">Ir para o formulário</button>
@@ -118,6 +102,7 @@
 
   <script>
     const URL_CSV = "https://docs.google.com/spreadsheets/d/1tr_kyEFuQVPy_zDfWJ2qEkumEYLu-1APUeEqW2RW308/export?format=csv";
+
     const input = document.getElementById('cnpj');
     const razao = document.getElementById('razao');
     const dropdown = document.getElementById('dropdown');
