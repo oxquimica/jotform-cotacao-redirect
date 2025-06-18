@@ -32,10 +32,13 @@
       margin: 0 auto 20px;
       opacity: 0;
       animation: fadeIn 0.5s forwards;
+      animation-delay: 0s;
     }
 
     img.logo-final {
-      animation-delay: 1.5s;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+      animation-delay: 2s;
     }
 
     h2, h3 {
@@ -44,8 +47,9 @@
     }
 
     h2 { animation: fadeIn 0.5s forwards; animation-delay: 0.25s; }
-    h3 { animation: fadeIn 0.5s forwards; animation-delay: 1s; }
-    input, button, select, .checkbox-container {
+    h3 { animation: fadeIn 0.5s forwards; animation-delay: 1.6s; }
+
+    input, button, select {
       padding: 10px;
       margin-top: 10px;
       font-size: 1rem;
@@ -58,17 +62,51 @@
     }
 
     input { width: calc(100% - 40px); animation-delay: 0.5s; }
-    select, button { width: 100%; }
-    select { animation-delay: 1.1s; }
-    button:nth-of-type(1) { animation-delay: 0.7s; }
-    button:nth-of-type(2) { animation-delay: 1.2s; }
-    hr { margin: 20px 0; animation: fadeIn 0.5s forwards; animation-delay: 0.8s; }
-    .info { margin-top: 10px; font-weight: bold; opacity: 0; animation: fadeIn 0.5s forwards; animation-delay: 0.6s; }
-    button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background-color 0.3s; }
-    button:hover { background-color: #0056b3; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    button:nth-of-type(1) { width: 100%; animation-delay: 1s; }
+    hr { margin: 20px 0; opacity: 0; animation: fadeIn 0.5s forwards; animation-delay: 1.4s; }
+    select { width: 100%; animation-delay: 1.8s; }
+    button:nth-of-type(2) { width: 100%; animation-delay: 2.2s; }
 
-    .cotacao { margin-bottom: 15px; font-size: 1.1rem; color: white; opacity: 0; animation: fadeIn 0.5s forwards; animation-delay: 0.4s; }
+    .info {
+      margin-top: 10px;
+      font-weight: bold;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+      animation-delay: 0.8s;
+    }
+
+    .checkbox-container {
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+      animation-delay: 0.7s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover { background-color: #0056b3; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cotacao {
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      color: white;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+      animation-delay: 0.4s;
+    }
   </style>
 </head>
 <body>
@@ -83,7 +121,8 @@
     <div class="info" id="razao"></div>
     
     <div class="checkbox-container">
-      <label><input type="checkbox" id="formularioAlternativo"> Usar outro formulário</label>
+      <input type="checkbox" id="formularioAlternativo">
+      <label for="formularioAlternativo">Usar outro formulário</label>
     </div>
 
     <button onclick="redirecionar()">Ir para o formulário</button>
